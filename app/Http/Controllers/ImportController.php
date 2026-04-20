@@ -39,6 +39,12 @@ class ImportController extends Controller
         }
     }
 
+    public function transactions()
+    {
+        $data = \App\Models\Transaction::latest()->get();
+        return view('transactions', compact('data'));
+    }
+
     public function deleteAll()
     {
         Transaction::truncate();

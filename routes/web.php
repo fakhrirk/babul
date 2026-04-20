@@ -10,5 +10,6 @@ Route::get('/', [ImportController::class, 'index'])->name('dashboard');
 Route::get('/transactions', [ImportController::class, 'index']);
 Route::post('/import', [ImportController::class, 'import']);
 Route::post('/delete-all', [ImportController::class, 'deleteAll']);
+Route::get('/transactions', [ImportController::class, 'transactions']);
 
 require __DIR__.'/settings.php';
