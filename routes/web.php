@@ -5,15 +5,8 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\ImportController;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+Route::get('/', [ImportController::class, 'index'])->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
-});
-
-Route::get('/', [ImportController::class, 'index']);
 Route::get('/transactions', [ImportController::class, 'index']);
 Route::post('/import', [ImportController::class, 'import']);
 Route::post('/delete-all', [ImportController::class, 'deleteAll']);

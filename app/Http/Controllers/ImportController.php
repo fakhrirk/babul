@@ -13,7 +13,7 @@ class ImportController extends Controller
     public function index()
     {
         $data = Transaction::orderBy('id', 'desc')->get();
-        return view('transactions', compact('data'));
+        return view('dashboard', compact('data'));
     }
 
     public function import(Request $request)
