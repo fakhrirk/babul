@@ -131,14 +131,14 @@ export default function ImportData() {
                             </div>
                         </div>
 
-                        <div className="bg-primary-container text-on-primary-container p-8 rounded-[2.5rem] border border-primary/10 relative overflow-hidden">
+                        {/* <div className="bg-primary-container text-on-primary-container p-8 rounded-[2.5rem] border border-primary/10 relative overflow-hidden">
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
                             <h4 className="relative z-10 font-black text-lg mb-2">Need help?</h4>
                             <p className="relative z-10 text-xs font-bold opacity-70 leading-relaxed mb-6">If you encounter any issues with the file format, please contact our support team.</p>
                             <button className="relative z-10 w-full py-4 bg-on-primary-container text-primary-container rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl">
                                 Documentation
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

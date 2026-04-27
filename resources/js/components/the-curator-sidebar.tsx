@@ -44,9 +44,9 @@ export function TheCuratorSidebar() {
             </nav>
             
             <div className="mt-auto pt-6">
-                <button className="w-full bg-primary-container text-on-primary-container rounded-full py-3 font-bold text-sm tracking-wide transition-transform active:scale-95">
+                <a href="/export" className="block text-center w-full bg-primary-container text-on-primary-container rounded-full py-3 font-bold text-sm tracking-wide transition-transform active:scale-95">
                     Generate Report
-                </button>
+                </a>
                 
                 <div className="mt-8 flex items-center justify-between gap-2 px-1">
                     <div className="flex items-center gap-3 overflow-hidden">

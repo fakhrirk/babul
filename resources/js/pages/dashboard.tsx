@@ -10,6 +10,13 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
     const profitKotor = data.reduce((sum, item) => sum + (Number(item.price_after) || 0), 0);
     const totalOrders = data.length;
 
+    // Derived Statistics
+    const avgTransactionValue = totalOrders > 0 ? omzetKotor / totalOrders : 0;
+    const costPercentage = omzetKotor > 0 ? (totalCost / omzetKotor) * 100 : 0;
+    const profitMargin = omzetKotor > 0 ? (profitKotor / omzetKotor) * 100 : 0;
+    const uniqueDays = new Set(data.map(item => (item.invoice_made ? String(item.invoice_made).substring(0, 10) : (item.created_at ? String(item.created_at).substring(0, 10) : ''))).filter(Boolean)).size || 1;
+    const avgOrdersPerDay = totalOrders / uniqueDays;
+
     // Platform analysis
     const platforms: Record<string, { omzet: number, profit: number, cost: number, transactions: number, refunds: number }> = {};
     data.forEach(item => {
@@ -63,6 +70,20 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
         }
     });
 
+    const getPlatformColor = (name: string, idx: number) => {
+        const n = name.toLowerCase();
+        if (n === 'shopee') return 'bg-orange-500';
+        if (n === 'tokopedia') return 'bg-primary';
+        return idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-secondary' : 'bg-tertiary';
+    };
+
+    const getPlatformIconColor = (name: string, idx: number) => {
+        const n = name.toLowerCase();
+        if (n === 'shopee') return 'bg-orange-500 text-white shadow-orange-500/20';
+        if (n === 'tokopedia') return 'bg-primary text-white shadow-primary/20';
+        return idx === 0 ? 'bg-primary text-white shadow-primary/20' : idx === 1 ? 'bg-secondary text-white shadow-secondary/20' : 'bg-surface-container-high text-on-surface';
+    };
+
     const sortedDates = Object.keys(chartDataMap).sort();
     const recentDates = sortedDates.slice(-30); // Last 30 periods to fit the layout
     
@@ -106,8 +127,8 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                     <div>
                         <h2 className="text-2xl font-extrabold text-on-surface tracking-tight">Rp {omzetKotor.toLocaleString('id-ID')}</h2>
                         <div className="mt-2 flex items-center gap-1">
-                            <span className="bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">+12.5%</span>
-                            <span className="text-[10px] text-on-surface-variant">vs last month</span>
+                            <span className="bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">Rp {Math.round(avgTransactionValue).toLocaleString('id-ID')}</span>
+                            <span className="text-[10px] text-on-surface-variant">avg per order</span>
                         </div>
                     </div>
                 </div>
@@ -121,8 +142,8 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                     <div>
                         <h2 className="text-2xl font-extrabold text-on-surface tracking-tight">Rp {totalCost.toLocaleString('id-ID')}</h2>
                         <div className="mt-2 flex items-center gap-1">
-                            <span className="bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">-3.2%</span>
-                            <span className="text-[10px] text-on-surface-variant">optimization focus</span>
+                            <span className="bg-tertiary-fixed text-on-tertiary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">{costPercentage.toFixed(1)}%</span>
+                            <span className="text-[10px] text-on-surface-variant">of gross revenue</span>
                         </div>
                     </div>
                 </div>
@@ -136,8 +157,8 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                     <div>
                         <h2 className="text-2xl font-extrabold text-on-surface tracking-tight">Rp {profitKotor.toLocaleString('id-ID')}</h2>
                         <div className="mt-2 flex items-center gap-1">
-                            <span className="bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">+8.4%</span>
-                            <span className="text-[10px] text-on-surface-variant">yield growth</span>
+                            <span className="bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">{profitMargin.toFixed(1)}%</span>
+                            <span className="text-[10px] text-on-surface-variant">profit margin</span>
                         </div>
                     </div>
                 </div>
@@ -151,8 +172,8 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                     <div>
                         <h2 className="text-2xl font-extrabold text-on-surface tracking-tight">{totalOrders}</h2>
                         <div className="mt-2 flex items-center gap-1">
-                            <span className="bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">+42</span>
-                            <span className="text-[10px] text-on-surface-variant">units today</span>
+                            <span className="bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold px-1.5 py-0.5 rounded-full">{Math.round(avgOrdersPerDay)}</span>
+                            <span className="text-[10px] text-on-surface-variant">orders / day</span>
                         </div>
                     </div>
                 </div>
@@ -170,7 +191,7 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                             <div key={idx} className="group relative bg-surface-container-low rounded-2xl p-5 transition-all duration-300 hover:bg-white hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 overflow-hidden cursor-default border border-transparent hover:border-surface-container-high">
                                 <div className="flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl shadow-sm ${idx === 0 ? 'bg-primary text-white shadow-primary/20' : idx === 1 ? 'bg-secondary text-white shadow-secondary/20' : 'bg-surface-container-high text-on-surface'}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl shadow-sm ${getPlatformIconColor(plat.name, idx)}`}>
                                             {plat.name.substring(0, 1).toUpperCase()}
                                         </div>
                                         <div>
@@ -222,12 +243,14 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                 <div className="bg-surface-container-lowest rounded-xl p-8 flex flex-col">
                     <h3 className="text-lg font-bold text-on-surface mb-6">Courier Analysis</h3>
                     <div className="flex-1 flex items-center justify-center relative">
-                        {/* Simulated Chart */}
-                        <div className="relative w-32 h-32 shrink-0 rounded-full border-[12px] border-primary-container flex items-center justify-center">
-                            <div className="absolute inset-0 border-[12px] border-secondary border-t-transparent border-r-transparent rounded-full rotate-45"></div>
-                            <div className="text-center">
+                        {/* Dynamic Circular Chart */}
+                        <div 
+                            className="relative w-32 h-32 shrink-0 rounded-full flex items-center justify-center"
+                            style={{ background: `conic-gradient(var(--color-secondary) ${topCourierPercentage}%, var(--color-primary-container) 0)` }}
+                        >
+                            <div className="absolute inset-3 bg-surface-container-lowest rounded-full flex flex-col items-center justify-center">
                                 <p className="text-xl font-extrabold text-on-surface leading-tight">{topCourierPercentage}%</p>
-                                <p className="text-[8px] text-on-surface-variant font-bold uppercase tracking-tighter max-w-[60px] truncate">{topCourierName}</p>
+                                <p className="text-[8px] text-on-surface-variant font-bold uppercase tracking-tighter max-w-[60px] truncate text-center">{topCourierName}</p>
                             </div>
                         </div>
                     </div>
@@ -338,7 +361,7 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                                         const platVal = day.platforms[p.name] || 0;
                                         if (platVal === 0) return null;
                                         const segmentHeight = (platVal / day.total) * 100;
-                                        const colorClass = pIdx === 0 ? 'bg-primary' : pIdx === 1 ? 'bg-secondary' : 'bg-tertiary';
+                                        const colorClass = getPlatformColor(p.name, pIdx);
                                         return (
                                             <div key={p.name} className={`w-full transition-all duration-500 ${colorClass}`} style={{ height: `${segmentHeight}%` }} title={`${p.name}: ${chartFilter === 'revenue' ? 'Rp '+platVal.toLocaleString() : platVal}`}></div>
                                         );
@@ -358,7 +381,7 @@ export default function Dashboard({ data = [] }: { data: any[] }) {
                 <div className="mt-8 flex items-center justify-center gap-10">
                     {platformData.length > 0 ? platformData.map((plat, idx) => (
                         <div key={idx} className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-secondary' : 'bg-tertiary'}`}></div>
+                            <div className={`w-3 h-3 rounded-full ${getPlatformColor(plat.name, idx)}`}></div>
                             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{plat.name}</span>
                         </div>
                     )) : (

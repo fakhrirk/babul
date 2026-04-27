@@ -11,6 +11,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions', [ImportController::class, 'transactions'])->name('transactions');
     Route::post('/import', [ImportController::class, 'import'])->name('import.post');
     Route::post('/delete-all', [ImportController::class, 'deleteAll'])->name('delete-all');
+    Route::get('/export', [ImportController::class, 'export'])->name('export');
 });
 
 require __DIR__.'/settings.php';

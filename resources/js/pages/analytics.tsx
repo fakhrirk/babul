@@ -1,14 +1,17 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import React from 'react';
 
-export default function Analytics({ data = [] }: { data: any[] }) {
+export default function Analytics({ data = [], period = 30 }: { data: any[], period?: number | string }) {
     // Basic computations
     const totalTransactions = data.length;
-    const totalRevenue = data.reduce((sum, item) => sum + (Number(item.price_after) || 0), 0);
+    const totalRevenue = data.reduce((sum, item) => sum + (Number(item.price_before) || 0), 0);
+    const netRevenue = data.reduce((sum, item) => sum + (Number(item.price_after) || 0), 0);
     const totalFees = data.reduce((sum, item) => sum + (Number(item.admin_fee) || 0) + (Number(item.service_fee) || 0) + (Number(item.transaction_fee) || 0) + (Number(item.campaign_fee) || 0), 0);
     
-    // Growth simulation
-    const growthRate = "+14.2%";
+    // Progress calculation
+    const revenueProgress = 100;
+    const feesProgress = totalRevenue > 0 ? Math.round((totalFees / totalRevenue) * 100) : 0;
+    const netProgress = totalRevenue > 0 ? Math.round((netRevenue / totalRevenue) * 100) : 0;
     
     // Platform distribution
     const platforms: Record<string, number> = {};
@@ -22,9 +25,23 @@ export default function Analytics({ data = [] }: { data: any[] }) {
         percentage: totalTransactions > 0 ? Math.round((count / totalTransactions) * 100) : 0
     })).sort((a, b) => b.count - a.count);
 
-    // Monthly Trend (Simulated)
-    const trendData = [45, 52, 48, 70, 65, 85, 92, 88, 110, 105, 120, 115];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // Trend Data (Actual)
+    const chartDataMap: Record<string, number> = {};
+    data.forEach(item => {
+        const dateRaw = (item.invoice_made ? String(item.invoice_made).substring(0, 10) : null) || (item.created_at ? String(item.created_at).substring(0, 10) : 'Unknown Date');
+        chartDataMap[dateRaw] = (chartDataMap[dateRaw] || 0) + (Number(item.price_after) || 0);
+    });
+    
+    const sortedDates = Object.keys(chartDataMap).sort();
+    const recentDates = sortedDates.slice(-12); // Show up to last 12 periods
+    const trendData = recentDates.map(d => chartDataMap[d]);
+    const maxTrend = Math.max(...trendData, 1);
+    
+    const months = recentDates.map(d => {
+        const dObj = new Date(d);
+        if (isNaN(dObj.getTime())) return d.substring(5, 10);
+        return dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
 
     return (
         <>
@@ -38,23 +55,28 @@ export default function Analytics({ data = [] }: { data: any[] }) {
                         <p className="text-on-surface-variant font-medium text-lg">Deep dive into your studio's financial performance signals.</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="bg-surface-container-high/50 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-surface-container-highest/20 flex items-center gap-3">
-                            <span className="material-symbols-outlined text-primary text-xl">calendar_month</span>
-                            <span className="text-sm font-bold text-on-surface">Last 30 Days</span>
-                        </div>
-                        <button className="bg-primary text-white px-6 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
+                        <select 
+                            className="bg-surface-container-high/50 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-surface-container-highest/20 text-sm font-bold text-on-surface outline-none appearance-none cursor-pointer"
+                            onChange={(e) => router.get('/analytics', { period: e.target.value }, { preserveState: true })}
+                            defaultValue={period}
+                        >
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="all">All Time</option>
+                        </select>
+                        <a href={`/export?period=${period}`} className="bg-primary text-white px-6 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 shadow-xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all">
                             <span className="material-symbols-outlined">download</span>
                             Export Report
-                        </button>
+                        </a>
                     </div>
                 </div>
 
                 {/* Key Metrics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {[
-                        { label: 'Gross Revenue', value: `Rp ${totalRevenue.toLocaleString('id-ID')}`, color: 'primary', trend: growthRate, progress: 75, icon: 'payments' },
-                        { label: 'Operating Fees', value: `Rp ${totalFees.toLocaleString('id-ID')}`, color: 'tertiary', trend: '-2.4%', progress: 40, icon: 'receipt_long' },
-                        { label: 'Conversion Count', value: totalTransactions, color: 'secondary', trend: '+12 today', progress: 60, icon: 'conversion_path' }
+                        { label: 'Gross Revenue', value: `Rp ${totalRevenue.toLocaleString('id-ID')}`, color: 'primary', trend: 'Total', progress: revenueProgress, icon: 'payments' },
+                        { label: 'Operating Fees', value: `Rp ${totalFees.toLocaleString('id-ID')}`, color: 'error', trend: `${feesProgress}%`, progress: feesProgress, icon: 'receipt_long' },
+                        { label: 'Net Income', value: `Rp ${netRevenue.toLocaleString('id-ID')}`, color: 'secondary', trend: `${netProgress}%`, progress: netProgress, icon: 'account_balance_wallet' }
                     ].map((metric, i) => (
                         <div key={i} className="group bg-surface-container-lowest p-8 rounded-[2.5rem] border border-surface-container-high transition-all hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5">
                             <div className="flex items-center justify-between mb-8">
@@ -102,19 +124,21 @@ export default function Analytics({ data = [] }: { data: any[] }) {
                         <div className="flex-1 flex flex-col min-h-[300px]">
                             {/* Bars Row */}
                             <div className="flex-1 flex items-end justify-between gap-2 md:gap-4 px-2">
-                                {trendData.map((val, i) => (
+                                {trendData.length > 0 ? trendData.map((val, i) => (
                                     <div key={i} className="flex-1 group relative flex flex-col justify-end h-full">
                                         <div 
-                                            style={{ height: `${val}%` }} 
+                                            style={{ height: `${(val / maxTrend) * 100}%` }} 
                                             className={`w-full rounded-t-xl transition-all duration-700 ${i === trendData.length - 1 ? 'bg-primary shadow-xl shadow-primary/30' : 'bg-surface-container-highest/50 hover:bg-primary/20'}`}
                                         ></div>
                                         
                                         {/* Tooltip */}
                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-on-surface text-surface text-[10px] py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100 font-bold pointer-events-none whitespace-nowrap shadow-xl z-20">
-                                            Rp {(val * 100000).toLocaleString('id-ID')}
+                                            Rp {val.toLocaleString('id-ID')}
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="w-full h-full flex items-center justify-center text-sm font-bold opacity-30">No data available</div>
+                                )}
                             </div>
                             
                             {/* Labels Row */}
@@ -170,9 +194,9 @@ export default function Analytics({ data = [] }: { data: any[] }) {
                             )}
                         </div>
 
-                        <button className="relative z-10 mt-12 w-full py-5 bg-white text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                        <Link href="/transactions" className="relative z-10 mt-12 w-full py-5 bg-white text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-center block">
                             Detailed Breakdown
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>

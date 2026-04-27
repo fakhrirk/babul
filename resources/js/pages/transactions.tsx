@@ -1,9 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { dashboard } from '@/routes';
 import { ChevronDown, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function Transactions({ data = [] }: { data: any[] }) {
+export default function Transactions({ data = [], filters = {} }: { data: any[], filters?: any }) {
     return (
         <>
             <Head title="Transaction Reports" />
@@ -12,14 +12,19 @@ export default function Transactions({ data = [] }: { data: any[] }) {
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-on-surface">Transaction Reports</h2>
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center bg-surface-container-highest px-4 py-2 rounded-full text-sm font-bold text-on-surface hover:bg-surface-dim transition-colors">
-                            6 Files
-                            <span className="material-symbols-outlined ml-2 text-sm">expand_more</span>
-                        </button>
-                        <button className="flex items-center bg-primary text-on-primary px-4 py-2 rounded-full text-sm font-bold transition-all hover:bg-primary/90 scale-95 active:scale-90">
+                        <select 
+                            className="bg-surface-container-highest px-4 py-2 rounded-full text-sm font-bold text-on-surface hover:bg-surface-dim transition-colors appearance-none outline-none cursor-pointer"
+                            onChange={(e) => router.get('/transactions', { ...filters, platform: e.target.value }, { preserveState: true })}
+                            defaultValue={filters?.platform || 'all'}
+                        >
+                            <option value="all">All Platforms</option>
+                            <option value="Shopee">Shopee</option>
+                            <option value="Tokopedia">Tokopedia</option>
+                        </select>
+                        <a href={`/export?search=${filters?.search || ''}&platform=${filters?.platform || ''}`} className="flex items-center bg-primary text-on-primary px-4 py-2 rounded-full text-sm font-bold transition-all hover:bg-primary/90 scale-95 active:scale-90">
                             <span className="material-symbols-outlined mr-2 text-sm">download</span>
                             Download
-                        </button>
+                        </a>
                     </div>
                 </div>
 
